@@ -2,7 +2,7 @@ import streamlit as st
 from groq import Groq
 
 # 填入 console.groq.com 获取的 API Key
-GROQ_API_KEY = "在此贴上你的key"
+GROQ_API_KEY = "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"
 client = Groq(api_key=GROQ_API_KEY)
 
 st.set_page_config(page_title="简易LLM问答", page_icon="💬")
