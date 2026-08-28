@@ -1,7 +1,7 @@
 import streamlit as st
 from groq import Groq
 
-# Load API key from Streamlit Secrets
+# Read API key from Streamlit Secrets
 GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
 client = Groq(api_key=GROQ_API_KEY)
 
@@ -43,7 +43,7 @@ Give clear, accurate answers.
 def get_ai_response(user_question: str, system_text: str):
     try:
         completion = client.chat.completions.create(
-            model="llama-3.1-8b-instant",
+            model="openai/gpt-oss-20b",
             messages=[
                 {"role": "system", "content": system_text},
                 {"role": "user", "content": user_question}
@@ -55,6 +55,7 @@ def get_ai_response(user_question: str, system_text: str):
     except Exception as err:
         st.error(f"API Connection Error: {str(err)}")
         return "⚠️ Failed to get reply from LLM. Please check your API key, network or quota limit."
+
 
 st.divider()
 # Mode1: Text input + submit button
