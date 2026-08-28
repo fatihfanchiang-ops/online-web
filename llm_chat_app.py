@@ -1,3 +1,4 @@
+
 import streamlit as st
 from groq import Groq
 
@@ -10,7 +11,7 @@ st.set_page_config(page_title="Simple LLM Chat App", page_icon="🤖")
 st.title("Simple LLM Chat Interface")
 st.divider()
 
-# -------- Part12: Privacy & Safety Notice --------
+# -------- Safety Notice --------
 with st.expander("⚠️ Important Safety Notice", expanded=False):
     st.markdown("""
 - Large‑language models may produce incorrect or hallucinated answers.
@@ -18,28 +19,26 @@ with st.expander("⚠️ Important Safety Notice", expanded=False):
 - This chat is for educational use only.
 """)
 
-# -------- Part10: Two user selectable options --------
-st.subheader("Settings for Python Tutor")
+# -------- Two user adjustable settings --------
+st.subheader("Assistant Settings")
 difficulty_level = st.selectbox(
-    "Select Python difficulty level",
-    ["Beginner", "Intermediate", "Advanced"]
+    "Select answer detail level",
+    ["Beginner(Simple & easy to understand)", "Intermediate", "Advanced(More professional & detailed)"]
 )
 response_format = st.radio(
     "Choose output format",
     ["Paragraph text", "Bullet‑point list"]
 )
 
-# Build system prompt Part9: Assign AI role (Python tutor)
+# General‑purpose system prompt — normal AI behaviour
 system_prompt = f"""
-You are a helpful Python programming tutor.
-Difficulty level: {difficulty_level}
+You are a helpful, friendly general‑purpose AI assistant.
+Answer all kinds of user questions.
+Detail level: {difficulty_level}
 Output format requirement: {response_format}
-Only answer questions related to Python programming.
-If user asks something unrelated to Python, politely refuse to answer and tell user to ask Python‑related questions.
-Give clear, accurate answers.
+Give clear, accurate and easy‑to‑follow replies.
 """
 
-# Function Part9 + Part11 Exception handling
 def get_ai_response(user_question: str, system_text: str):
     try:
         completion = client.chat.completions.create(
@@ -60,22 +59,22 @@ def get_ai_response(user_question: str, system_text: str):
 st.divider()
 # Mode1: Text input + submit button
 st.subheader("Mode 1: Text input with submit button")
-user_question = st.text_input("Please enter your Python question here:")
-submit_btn = st.button("Get LLM answer")
+user_question = st.text_input("Enter your question here:")
+submit_btn = st.button("Get AI answer")
 
 if submit_btn:
     if not user_question.strip():
         st.warning("Please input a valid question!")
     else:
-        with st.spinner("Waiting for LLM response ..."):
+        with st.spinner("Waiting for AI response ..."):
             ai_reply = get_ai_response(user_question, system_prompt)
-            st.markdown("**LLM Answer:**")
+            st.markdown("**AI Answer:**")
             st.write(ai_reply)
 
 st.divider()
 # Mode2: Native chat bubble interface
 st.subheader("Mode 2: Chat‑bubble input box")
-chat_input_text = st.chat_input("Ask your Python question ...")
+chat_input_text = st.chat_input("Ask anything ...")
 
 if chat_input_text:
     if not chat_input_text.strip():
