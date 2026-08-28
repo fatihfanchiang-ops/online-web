@@ -1,139 +1,86 @@
-"""
-AI Python Tutor - LLM Web Application
-Built with Streamlit + Groq API
-"""
-
 import streamlit as st
 from groq import Groq
 
-# -----------------------------
-# API Client Setup
-# API key is stored in Streamlit Secrets (never hard-coded)
-# -----------------------------
-client = Groq(api_key=st.secrets["GROQ_API_KEY"])
+# Load API key from Streamlit Secrets
+GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
+client = Groq(api_key=GROQ_API_KEY)
 
-# -----------------------------
-# Page Configuration
-# -----------------------------
-st.set_page_config(page_title="AI Python Tutor", page_icon="🐍", layout="centered")
+# Page config
+st.set_page_config(page_title="Simple LLM Chat App", page_icon="🤖")
+st.title("Simple LLM Chat Interface")
+st.divider()
 
-st.title("🐍 AI Python Tutor")
-st.markdown("A web application that helps beginners learn Python programming, powered by a Large Language Model.")
-
-# -----------------------------
-# Part 12 - User Privacy & Safety Notice
-# -----------------------------
-with st.expander("⚠️ Important Notice - Please Read", expanded=True):
+# -------- Part12: Privacy & Safety Notice --------
+with st.expander("⚠️ Important Safety Notice", expanded=False):
     st.markdown("""
-    - AI responses **may contain mistakes**. Always verify important information.
-    - Do **NOT** enter passwords, home addresses, ID numbers, or any private / sensitive personal information.
-    - This tutor is for Python learning only.
-    """)
+- Large‑language models may produce incorrect or hallucinated answers.
+- **Do NOT input passwords, ID numbers, private address or any sensitive personal information.**
+- This chat is for educational use only.
+""")
 
-st.divider()
+# -------- Part10: Two user selectable options --------
+st.subheader("Settings for Python Tutor")
+difficulty_level = st.selectbox(
+    "Select Python difficulty level",
+    ["Beginner", "Intermediate", "Advanced"]
+)
+response_format = st.radio(
+    "Choose output format",
+    ["Paragraph text", "Bullet‑point list"]
+)
 
-# -----------------------------
-# Part 10 - Two User-Controlled Options
-# -----------------------------
-st.subheader("Customize Your Answer")
-
-col1, col2 = st.columns(2)
-with col1:
-    difficulty = st.selectbox(
-        "Difficulty Level",
-        ["Beginner", "Intermediate", "Advanced"],
-        help="Controls how advanced the explanation will be."
-    )
-
-with col2:
-    output_style = st.radio(
-        "Response Format",
-        ["Short Paragraph", "Bullet Points"],
-        help="Controls how the answer is structured."
-    )
-
-st.divider()
-
-# -----------------------------
-# Part 9 - Custom System Instruction
-# The AI has a specific role: beginner-friendly Python tutor.
-# -----------------------------
-def build_system_prompt(diff, style):
-    return f"""You are a friendly, patient Python programming tutor for students.
-
-Your role:
-- Help users understand Python concepts clearly.
-- Use simple language and short code examples when helpful.
-- Stay focused on Python programming. If the user asks an unrelated topic, politely remind them you are a Python tutor.
-
-User-selected options (you MUST follow these):
-- Difficulty level: {diff}
-- Response format: {style}
-
-If the format is "Bullet Points", answer using a markdown bullet list.
-If the format is "Short Paragraph", answer in 2-4 concise paragraphs.
+# Build system prompt Part9: Assign AI role (Python tutor)
+system_prompt = f"""
+You are a helpful Python programming tutor.
+Difficulty level: {difficulty_level}
+Output format requirement: {response_format}
+Only answer questions related to Python programming.
+If user asks something unrelated to Python, politely refuse to answer and tell user to ask Python‑related questions.
+Give clear, accurate answers.
 """
 
-# -----------------------------
-# Part 7 / Part 11 - LLM Connection with Error Handling
-# -----------------------------
-def get_ai_response(question, system_text):
-    """Send one user message to the LLM and return the response text.
-    Handles common API failures gracefully.
-    """
+# Function Part9 + Part11 Exception handling
+def get_ai_response(user_question: str, system_text: str):
     try:
         completion = client.chat.completions.create(
             model="llama-3.1-8b-instant",
             messages=[
                 {"role": "system", "content": system_text},
-                {"role": "user", "content": question}
+                {"role": "user", "content": user_question}
             ],
-            temperature=0.7,
-            max_tokens=1024
+            temperature=0.7
         )
         return completion.choices[0].message.content
 
-    except Exception as e:
-        error_msg = str(e).lower()
-        if "api key" in error_msg or "authentication" in error_msg or "401" in error_msg:
-            return "ERROR: Invalid or missing API key. Please check the API key configuration."
-        elif "rate limit" in error_msg or "429" in error_msg:
-            return "ERROR: Free API usage limit reached. Please wait a moment and try again."
-        elif "timeout" in error_msg:
-            return "ERROR: Request timed out. Please check your internet connection and try again."
-        elif "model" in error_msg:
-            return "ERROR: The selected model is currently unavailable. Please try again later."
-        else:
-            return f"ERROR: Something went wrong while connecting to the AI service. Details: {str(e)}"
-
-# -----------------------------
-# Part 8 - Web Interface: Input + Submit + Response
-# -----------------------------
-st.subheader("Ask Your Python Question")
-
-question = st.text_area(
-    "Type your question here:",
-    placeholder="e.g. What is a for loop in Python?",
-    height=120
-)
-
-ask_button = st.button("Ask AI Tutor", type="primary")
-
-if ask_button:
-    # Part 11 - Empty input handling
-    if not question.strip():
-        st.error("Please enter a question first. Empty input is not allowed.")
-    else:
-        system_prompt = build_system_prompt(difficulty, output_style)
-        with st.spinner("Thinking... Please wait for the AI response."):
-            answer = get_ai_response(question, system_prompt)
-
-        if answer.startswith("ERROR"):
-            st.error(answer)
-        else:
-            st.success("Here is your answer:")
-            st.markdown("### 🤖 AI Tutor Response")
-            st.write(answer)
+    except Exception as err:
+        st.error(f"API Connection Error: {str(err)}")
+        return "⚠️ Failed to get reply from LLM. Please check your API key, network or quota limit."
 
 st.divider()
-st.caption("Built with Streamlit · LLM Provider: Groq · Model: llama-3.1-8b-instant")
+# Mode1: Text input + submit button
+st.subheader("Mode 1: Text input with submit button")
+user_question = st.text_input("Please enter your Python question here:")
+submit_btn = st.button("Get LLM answer")
+
+if submit_btn:
+    if not user_question.strip():
+        st.warning("Please input a valid question!")
+    else:
+        with st.spinner("Waiting for LLM response ..."):
+            ai_reply = get_ai_response(user_question, system_prompt)
+            st.markdown("**LLM Answer:**")
+            st.write(ai_reply)
+
+st.divider()
+# Mode2: Native chat bubble interface
+st.subheader("Mode 2: Chat‑bubble input box")
+chat_input_text = st.chat_input("Ask your Python question ...")
+
+if chat_input_text:
+    if not chat_input_text.strip():
+        st.warning("Empty question, please type content.")
+    else:
+        st.chat_message("user").write(chat_input_text)
+        with st.spinner("Generating answer ..."):
+            llm_result = get_ai_response(chat_input_text, system_prompt)
+            st.chat_message("assistant").write(llm_result)
